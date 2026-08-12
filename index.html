@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#0a0a0f"/>
+<title>Sumu — Daily Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--gold:#c9a96e;--gold-dim:rgba(201,169,110,0.12);--gold-glow:rgba(201,169,110,0.22);--green:#52b788;--green-dim:rgba(82,183,136,0.12);--red:#e07b6a;--blue:#74afd3;--blue-dim:rgba(116,175,211,0.12);--purple:#a89fd8;--purple-dim:rgba(168,159,216,0.12);--pink:#e8a0b0;--pink-dim:rgba(232,160,176,0.12);--radius:16px;--radius-sm:10px;--t:0.22s cubic-bezier(0.4,0,0.2,1);}
+[data-theme="dark"]{--bg:#09090e;--surface:#111117;--surface2:#15151e;--surface3:#1c1c27;--border:rgba(255,255,255,0.055);--border2:rgba(255,255,255,0.1);--text:#efece7;--text2:#9e9890;--text3:#58534e;--nav-bg:rgba(9,9,14,0.9);}
+[data-theme="light"]{--bg:#f6f4ef;--surface:#fff;--surface2:#f1eeea;--surface3:#ece8e2;--border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.12);--text:#1a1714;--text2:#6b6460;--text3:#a09890;--nav-bg:rgba(246,244,239,0.92);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-weight:300;min-height:100vh;overflow-x:hidden;transition:background var(--t),color var(--t)}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px}
+.nav{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--nav-bg);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid var(--border);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 14px}
+.nav-left{display:flex;align-items:center;gap:8px}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background 0.3s}
+.sync-dot.synced{background:var(--green)}.sync-dot.syncing{background:var(--gold);animation:blink 1s infinite}.sync-dot.error{background:var(--red)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.nav-brand{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--gold)}
+.nav-right{display:flex;align-items:center;gap:5px}
+.icon-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--text2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:0.8rem;display:flex;align-items:center;justify-content:center;transition:all var(--t);flex-shrink:0}
+.icon-btn:hover{border-color:var(--gold);color:var(--gold)}
+.nav-tabs{display:flex;gap:2px;background:var(--surface2);border-radius:10px;padding:3px}
+.nav-tab{padding:4px 10px;border-radius:7px;font-size:0.68rem;font-weight:400;cursor:pointer;border:none;background:none;color:var(--text3);font-family:'Inter',sans-serif;transition:all var(--t);white-space:nowrap}
+.nav-tab.active{background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-glow)}
+main{padding-top:68px;padding-bottom:56px;max-width:500px;margin:0 auto;padding-left:14px;padding-right:14px}
+.view{display:none}.view.active{display:block;animation:fadeUp 0.28s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity 0.4s}
+.loading.hidden{opacity:0;pointer-events:none}
+.loader-ring{width:32px;height:32px;border:2px solid var(--surface3);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite;margin-bottom:16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-title{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--gold);margin-bottom:4px}
+.loader-sub{font-size:0.68rem;color:var(--text3)}
+.hero{text-align:center;padding:18px 0 14px;position:relative}
+.hero-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:280px;height:120px;background:radial-gradient(ellipse,rgba(201,169,110,0.07) 0%,transparent 70%);pointer-events:none}
+.hero-date{font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;font-weight:500}
+.hero-title{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:var(--text);line-height:1.1;margin-bottom:5px}
+.hero-title em{color:var(--gold);font-style:italic}
+.hero-sub{font-size:0.73rem;color:var(--text2);line-height:1.5;max-width:280px;margin:0 auto}
+.setup-card{background:var(--gold-dim);border:1px solid var(--gold-glow);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;display:none}
+.setup-card.visible{display:block}
+.setup-card h3{font-family:'Playfair Display',serif;font-size:0.88rem;color:var(--gold);margin-bottom:4px}
+.setup-card p{font-size:0.68rem;color:var(--text2);line-height:1.5;margin-bottom:8px}
+.setup-input{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.72rem;padding:7px 11px;outline:none;margin-bottom:5px;transition:border-color var(--t)}
+.setup-input:focus{border-color:var(--gold)}.setup-input::placeholder{color:var(--text3)}
+.setup-btn{width:100%;padding:8px;background:var(--gold-dim);border:1px solid var(--gold-glow);border-radius:8px;color:var(--gold);font-family:'Inter',sans-serif;font-size:0.72rem;font-weight:500;cursor:pointer}
+.date-nav{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px}
+.date-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--text2);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;transition:all var(--t)}
+.date-btn:hover{color:var(--gold);border-color:var(--gold-glow)}.date-btn:disabled{opacity:0.18;cursor:default}
+.date-label{font-size:0.72rem;color:var(--text2);min-width:80px;text-align:center}
+.past-banner{background:var(--blue-dim);border:1px solid rgba(116,175,211,0.2);border-radius:8px;padding:7px 14px;font-size:0.67rem;color:var(--blue);text-align:center;margin-bottom:10px;display:none}
+.past-banner.visible{display:block}
+.sleep-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:15px;margin-bottom:12px}
+.card-label{font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;font-weight:500;display:block}
+.sleep-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px}
+.sleep-btn{padding:9px 4px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:0.68rem;cursor:pointer;transition:all var(--t);text-align:center;font-family:'Inter',sans-serif;line-height:1.4}
+.sleep-btn:hover{border-color:var(--gold-glow);color:var(--gold)}
+.sleep-btn.active{background:var(--gold-dim);border-color:rgba(201,169,110,0.4);color:var(--gold);font-weight:500}
+.sleep-btn.sp-period{border-color:rgba(232,160,176,0.3);color:var(--pink)}
+.sleep-btn.sp-period.active{background:var(--pink-dim);border-color:rgba(232,160,176,0.5)}
+.sleep-btn.sp-enjoy{border-color:rgba(116,175,211,0.3);color:var(--blue)}
+.sleep-btn.sp-enjoy.active{background:var(--blue-dim);border-color:rgba(116,175,211,0.5)}
+.sleep-info-text{font-size:0.65rem;color:var(--text3);text-align:center;line-height:1.5}
+.prayer-times-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;margin-bottom:12px}
+.pt-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.pt-title{font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);font-weight:500}
+.pt-date{font-size:0.58rem;color:var(--text3)}
+.pt-row{display:flex;gap:3px}
+.pt-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 3px;border-radius:7px;transition:all var(--t)}
+.pt-item.active{background:var(--gold-dim);border:1px solid var(--gold-glow)}
+.pt-item.past{opacity:0.35}
+.pt-emoji{font-size:0.95rem}.pt-name{font-size:0.54rem;color:var(--text2);font-weight:500}.pt-time{font-size:0.62rem;color:var(--gold);font-weight:600}
+.coach-card{background:linear-gradient(135deg,var(--gold-dim),rgba(201,169,110,0.01));border:1px solid var(--gold-glow);border-radius:var(--radius);padding:13px 15px;margin-bottom:12px;position:relative;overflow:hidden}
+.coach-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(180deg,var(--gold),transparent)}
+.coach-label{font-size:0.56rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;font-weight:500}
+.coach-text{font-family:'Playfair Display',serif;font-size:0.9rem;color:var(--text);line-height:1.5;font-style:italic}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;margin-top:18px}
+.sec-title{font-family:'Playfair Display',serif;font-size:0.97rem;font-weight:600;color:var(--text)}
+.sec-badge{font-size:0.65rem;color:var(--text3);background:var(--surface2);padding:3px 9px;border-radius:20px;border:1px solid var(--border);white-space:nowrap}
+.sec-badge.done{color:var(--green);border-color:rgba(82,183,136,0.3);background:var(--green-dim)}
+.progress-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:15px;display:flex;align-items:center;gap:16px;margin-bottom:12px}
+.ring-wrap{position:relative;flex-shrink:0}
+.ring-svg{transform:rotate(-90deg)}.ring-bg{fill:none;stroke:var(--surface3)}.ring-fill{fill:none;stroke:var(--gold);stroke-linecap:round;transition:stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1)}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-pct{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--gold);line-height:1}
+.ring-lbl{font-size:0.5rem;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;margin-top:1px}
+.prog-stats{flex:1;display:flex;flex-direction:column;gap:7px}
+.pstat{display:flex;align-items:center;gap:7px}
+.pstat-lbl{font-size:0.65rem;color:var(--text2);min-width:44px}
+.pstat-track{flex:1;height:3px;background:var(--surface3);border-radius:2px;overflow:hidden}
+.pstat-fill{height:100%;border-radius:2px;transition:width 0.5s ease}
+.pstat-fill.g{background:var(--gold)}.pstat-fill.p{background:var(--purple)}.pstat-fill.gr{background:var(--green)}
+.pstat-val{font-size:0.62rem;color:var(--text3);min-width:22px;text-align:right}
+.prayer-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:12px}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 3px;text-align:center;cursor:pointer;transition:all 0.22s cubic-bezier(0.34,1.56,0.64,1);user-select:none;position:relative}
+.pc.checked{background:var(--gold-dim);border-color:rgba(201,169,110,0.35)}
+.pc.checked::after{content:'✓';position:absolute;top:3px;right:4px;font-size:0.5rem;color:var(--gold);font-weight:700}
+.pc-emoji{font-size:0.95rem;display:block;margin-bottom:2px}.pc-name{font-size:0.55rem;color:var(--text2)}.pc-time{font-size:0.58rem;color:var(--gold);margin-top:2px;font-weight:500}
+.habit-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:12px}
+.hc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 11px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:all 0.22s cubic-bezier(0.34,1.56,0.64,1);user-select:none}
+.hc.checked{background:var(--green-dim);border-color:rgba(82,183,136,0.3)}
+.hc-box{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.58rem;transition:all var(--t)}
+.hc.checked .hc-box{background:var(--green);border-color:var(--green);color:#fff}
+.hc-name{font-size:0.7rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hc-goal{font-size:0.56rem;color:var(--text3);margin-top:1px}
+.timeline{display:flex;flex-direction:column;margin-bottom:12px;position:relative}
+.timeline::before{content:'';position:absolute;left:52px;top:0;bottom:0;width:1px;background:linear-gradient(180deg,transparent,var(--border2) 5%,var(--border2) 95%,transparent)}
+.tl-item{display:flex;align-items:flex-start;position:relative;user-select:none}
+.tl-time-col{min-width:52px;padding-right:8px;text-align:right;padding-top:13px;flex-shrink:0}
+.tl-time-val{font-size:0.56rem;color:var(--text3);line-height:1.3;white-space:nowrap}
+.tl-time-dur{font-size:0.52rem;color:var(--text3);opacity:0.6;margin-top:1px}
+.tl-dot-col{display:flex;flex-direction:column;align-items:center;padding:0 9px;flex-shrink:0}
+.tl-dot{width:8px;height:8px;border-radius:50%;background:var(--surface3);border:2px solid var(--border2);margin-top:13px;transition:all var(--t);z-index:1;flex-shrink:0}
+.tl-item.done .tl-dot{background:var(--green);border-color:var(--green)}
+.tl-item.active-now .tl-dot{background:var(--gold);border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-glow)}
+.tl-item.is-prayer .tl-dot{background:rgba(201,169,110,0.2);border-color:rgba(201,169,110,0.45)}
+.tl-item.is-prayer.done .tl-dot{background:var(--gold);border-color:var(--gold)}
+.tl-item.is-sleep .tl-dot{background:rgba(168,159,216,0.2);border-color:rgba(168,159,216,0.4)}
+.tl-body-col{flex:1;margin-bottom:5px}
+.tl-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 11px;cursor:pointer;transition:all var(--t)}
+.tl-item.done .tl-card{opacity:0.38}
+.tl-item.done .tl-task-name{text-decoration:line-through;color:var(--text3)}
+.tl-item.active-now .tl-card{border-color:rgba(201,169,110,0.32);background:var(--gold-dim)}
+.tl-item.is-prayer .tl-card{border-color:rgba(201,169,110,0.16);background:rgba(201,169,110,0.03)}
+.tl-item.is-sleep .tl-card{border-color:rgba(168,159,216,0.16);background:rgba(168,159,216,0.03)}
+.tl-top{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.tl-task-name{font-size:0.77rem;color:var(--text);font-weight:400;flex:1;line-height:1.3}
+.tl-chips{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.chip{font-size:0.53rem;padding:2px 5px;border-radius:4px;background:var(--surface3);color:var(--text3);white-space:nowrap}
+.chip-ibadah{background:var(--gold-dim);color:var(--gold)}.chip-study{background:var(--purple-dim);color:var(--purple)}.chip-career{background:var(--blue-dim);color:var(--blue)}.chip-fitness{background:var(--green-dim);color:var(--green)}.chip-family{background:var(--pink-dim);color:var(--pink)}.chip-meals{background:var(--pink-dim);color:var(--pink)}.chip-free{background:rgba(255,255,255,0.04);color:var(--text3)}.chip-home{background:var(--blue-dim);color:var(--blue)}.chip-self{background:var(--green-dim);color:var(--green)}
+.tl-pri{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.tl-pri.high{background:var(--red)}.tl-pri.medium{background:var(--gold)}.tl-pri.low{background:var(--green)}
+.tl-check{font-size:0.62rem;width:18px;height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border2);color:var(--text3);flex-shrink:0;transition:all var(--t)}
+.tl-item.done .tl-check{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.tl-item.active-now .tl-check{border-color:var(--gold);color:var(--gold)}
+.tl-task-note{font-size:0.63rem;color:var(--text3);margin-top:4px;font-style:italic;line-height:1.4;opacity:0.8}
+.tl-note-area{margin-top:7px;border-top:1px solid var(--border);padding-top:7px}
+.tl-note-trigger{font-size:0.65rem;color:var(--text3);font-style:italic;cursor:pointer;opacity:0.6}
+.tl-user-note{font-size:0.68rem;color:var(--text2);font-style:italic;line-height:1.4;cursor:pointer}
+.mode-banner{border-radius:var(--radius-sm);padding:9px 13px;margin-bottom:9px;border:1px solid}
+.mode-banner.period{background:var(--pink-dim);border-color:rgba(232,160,176,0.3);color:var(--pink)}
+.mode-banner.enjoy{background:var(--blue-dim);border-color:rgba(116,175,211,0.3);color:var(--blue)}
+.mode-title{font-size:0.72rem;font-weight:500}.mode-sub{font-size:0.63rem;color:var(--text3);margin-top:2px;font-style:italic}
+.ref-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.ref-field{margin-bottom:10px}.ref-field:last-child{margin-bottom:0}
+.ref-lbl{font-size:0.57rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:5px;font-weight:500;display:block}
+.ref-ta{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.73rem;font-weight:300;padding:8px 11px;resize:none;min-height:50px;line-height:1.5;outline:none;transition:border-color var(--t)}
+.ref-ta:focus{border-color:rgba(201,169,110,0.35)}.ref-ta::placeholder{color:var(--text3)}.ref-ta[readonly]{opacity:0.5}
+.save-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--gold),#b8934a);border:none;border-radius:var(--radius-sm);color:#18120a;font-family:'Inter',sans-serif;font-size:0.74rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;cursor:pointer;transition:all var(--t);margin-top:8px}
+.save-btn:hover{filter:brightness(1.07);transform:translateY(-1px)}.save-btn:active{transform:translateY(0)}.save-btn:disabled{opacity:0.38;cursor:default;transform:none}
+.principle-list{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.principle{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;display:flex;gap:8px;align-items:flex-start}
+.p-num{font-family:'Playfair Display',serif;font-size:0.8rem;color:var(--gold);font-weight:700;min-width:14px;line-height:1.5}
+.p-text{font-size:0.71rem;color:var(--text2);line-height:1.5}
+.quote-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:17px;text-align:center;margin-bottom:12px;position:relative;overflow:hidden}
+.quote-card::before{content:'"';position:absolute;top:-12px;left:8px;font-family:'Playfair Display',serif;font-size:4rem;color:var(--gold);opacity:0.07;line-height:1}
+.qt{font-family:'Playfair Display',serif;font-size:0.87rem;font-style:italic;color:var(--text);line-height:1.6;margin-bottom:5px}
+.qa{font-size:0.6rem;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.sum-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;display:flex;align-items:center;gap:9px}
+.sum-icon{font-size:1rem;flex-shrink:0}
+.sum-val{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:var(--gold);line-height:1}
+.sum-lbl{font-size:0.55rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-top:1px}
+.hist-list{display:flex;flex-direction:column;gap:8px;padding-top:4px}
+.hcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px;cursor:pointer;transition:all var(--t)}
+.hcard:hover{border-color:var(--border2)}
+.hcard-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.hcard-date{font-family:'Playfair Display',serif;font-size:0.9rem;color:var(--text)}
+.hcard-right{display:flex;align-items:center;gap:7px}
+.hcard-mode{font-size:0.57rem;padding:2px 7px;border-radius:9px;background:var(--gold-dim);color:var(--gold)}
+.hcard-score{font-family:'Playfair Display',serif;font-size:1rem;color:var(--gold);font-weight:700}
+.hbar{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.hbar-l{font-size:0.6rem;color:var(--text3);min-width:48px}
+.hbar-t{flex:1;height:3px;background:var(--surface3);border-radius:2px;overflow:hidden}
+.hbar-f{height:100%;border-radius:2px}
+.hbar-v{font-size:0.6rem;color:var(--text3);min-width:20px;text-align:right}
+.hcard-win{margin-top:7px;font-size:0.65rem;color:var(--text3);font-style:italic;border-top:1px solid var(--border);padding-top:7px}
+.empty{text-align:center;padding:40px 20px;color:var(--text3);font-family:'Playfair Display',serif;font-size:0.92rem;font-style:italic}
+.streak-card{background:linear-gradient(135deg,var(--gold-dim),rgba(201,169,110,0.01));border:1px solid var(--gold-glow);border-radius:var(--radius);padding:18px;text-align:center;margin-bottom:12px;position:relative;overflow:hidden}
+.streak-card::before{content:'🔥';position:absolute;font-size:3rem;opacity:0.05;top:-4px;right:-4px}
+.streak-n{font-family:'Playfair Display',serif;font-size:2.5rem;font-weight:700;color:var(--gold);line-height:1}
+.streak-l{font-size:0.63rem;color:var(--text2);letter-spacing:0.1em;text-transform:uppercase;margin-top:4px}
+.stats-g{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center}
+.sc-v{font-family:'Playfair Display',serif;font-size:1.55rem;font-weight:700;color:var(--gold);line-height:1;margin-bottom:3px}
+.sc-l{font-size:0.58rem;color:var(--text3);letter-spacing:0.04em;text-transform:uppercase}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px;margin-bottom:12px}
+.chart-lbl{font-size:0.6rem;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:9px}
+.chart-bars{display:flex;align-items:flex-end;gap:4px;height:56px}
+.cbw{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;gap:2px}
+.cb{width:100%;border-radius:3px 3px 0 0;background:var(--surface3);min-height:2px;transition:height 0.5s ease}
+.cb.today{background:var(--gold)}
+.cb-p{font-size:0.5rem;color:var(--text3)}.cb-d{font-size:0.54rem;color:var(--text3);margin-top:3px}.cb-d.today{color:var(--gold)}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(56px);background:var(--surface2);border:1px solid var(--border2);border-radius:16px;padding:8px 16px;font-size:0.7rem;color:var(--text);transition:transform 0.28s cubic-bezier(0.34,1.56,0.64,1);z-index:999;white-space:nowrap;pointer-events:none;max-width:calc(100vw - 32px);text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-width:500px;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1)}
+.modal-overlay.open .modal-sheet{transform:translateY(0)}
+.modal-handle{width:36px;height:3px;background:var(--border2);border-radius:2px;margin:0 auto 16px}
+.modal-title{font-family:'Playfair Display',serif;font-size:1rem;color:var(--text);margin-bottom:6px}
+.modal-task{font-size:0.76rem;color:var(--text2);margin-bottom:12px;font-style:italic}
+.modal-ta{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.78rem;font-weight:300;padding:10px 13px;resize:none;min-height:80px;line-height:1.5;outline:none;transition:border-color var(--t)}
+.modal-ta:focus{border-color:rgba(201,169,110,0.4)}.modal-ta::placeholder{color:var(--text3)}
+.modal-btns{display:flex;gap:8px;margin-top:12px}
+.modal-btn{flex:1;padding:11px;border-radius:10px;font-family:'Inter',sans-serif;font-size:0.74rem;font-weight:500;cursor:pointer;transition:all var(--t);border:1px solid var(--border2);background:var(--surface2);color:var(--text2)}
+.modal-btn.primary{background:linear-gradient(135deg,var(--gold),#b8934a);border-color:transparent;color:#18120a;font-weight:600}
+</style>
+</head>
+<body>
+<div class="loading" id="loading">
+  <div class="loader-ring"></div>
+  <div class="loader-title">🌙 Sumu</div>
+  <div class="loader-sub" id="loader-sub">Loading prayer times...</div>
+</div>
+<div class="modal-overlay" id="note-modal" onclick="closeModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📝 Task Note</div>
+    <div class="modal-task" id="modal-task-name"></div>
+    <textarea class="modal-ta" id="modal-ta" placeholder="Add your note here..."></textarea>
+    <div class="modal-btns">
+      <button class="modal-btn" onclick="document.getElementById('note-modal').classList.remove('open')">Cancel</button>
+      <button class="modal-btn primary" onclick="saveNote()">Save Note ✦</button>
+    </div>
+  </div>
+</div>
+<nav class="nav">
+  <div class="nav-left">
+    <div class="sync-dot" id="sync-dot"></div>
+    <div class="nav-brand">Sumu's Planner</div>
+  </div>
+  <div class="nav-right">
+    <button class="icon-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tab-today" onclick="switchView('today',this)">Today</button>
+      <button class="nav-tab" id="tab-history" onclick="switchView('history',this)">History</button>
+      <button class="nav-tab" id="tab-stats" onclick="switchView('stats',this)">Stats</button>
+    </div>
+  </div>
+</nav>
+<main>
+<div class="view active" id="view-today">
+  <div class="setup-card" id="setup-card">
+    <h3>⚙️ Connect Supabase</h3>
+    <p>Paste your Supabase URL and anon key to sync across all devices.</p>
+    <input class="setup-input" id="sb-url" placeholder="https://xxxx.supabase.co" autocomplete="off"/>
+    <input class="setup-input" id="sb-key" placeholder="anon-public-key" autocomplete="off"/>
+    <button class="setup-btn" onclick="saveSupabaseConfig()">Connect & Sync ✦</button>
+  </div>
+  <div class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-date" id="hero-date">—</div>
+    <h1 class="hero-title">Your <em>Adaptive</em> Planner</h1>
+    <p class="hero-sub" id="hero-quote">Discipline is choosing between what you want now and what you want most.</p>
+  </div>
+  <div class="past-banner" id="past-banner">📅 Viewing <span id="past-lbl"></span> — Read only</div>
+  <div class="date-nav">
+    <button class="date-btn" onclick="changeDay(-1)" id="btn-prev">‹</button>
+    <span class="date-label" id="date-lbl">Today</span>
+    <button class="date-btn" onclick="changeDay(1)" id="btn-next" disabled>›</button>
+  </div>
+  <div class="sleep-card">
+    <span class="card-label">⏰ Last Night — What time did you sleep?</span>
+    <div class="sleep-grid" id="sleep-grid"></div>
+    <div class="sleep-info-text" id="sleep-info">Select sleep time — full day schedule auto-generates</div>
+  </div>
+  <div class="prayer-times-card">
+    <div class="pt-header">
+      <div class="pt-title">🕌 Today's Prayer Times</div>
+      <div class="pt-date" id="pt-date">—</div>
+    </div>
+    <div class="pt-row" id="pt-row"><div style="font-size:0.68rem;color:var(--text3);padding:8px">Loading...</div></div>
+  </div>
+  <div class="coach-card">
+    <div class="coach-label">🤝 Your Daily Coach</div>
+    <div class="coach-text" id="coach-msg">Bismillah — today is yours.</div>
+  </div>
+  <div class="sec-hdr"><span class="sec-title">📊 Today's Progress</span><span class="sec-badge" id="overall-badge">0%</span></div>
+  <div class="progress-card">
+    <div class="ring-wrap">
+      <svg class="ring-svg" width="78" height="78" viewBox="0 0 78 78">
+        <circle class="ring-bg" cx="39" cy="39" r="32" stroke-width="5"/>
+        <circle class="ring-fill" id="main-ring" cx="39" cy="39" r="32" stroke-width="5" stroke-dasharray="201.06" stroke-dashoffset="201.06"/>
+      </svg>
+      <div class="ring-center"><div class="ring-pct" id="ring-pct">0%</div><div class="ring-lbl">Overall</div></div>
+    </div>
+    <div class="prog-stats">
+      <div class="pstat"><span class="pstat-lbl">🕌 Prayers</span><div class="pstat-track"><div class="pstat-fill g" id="bar-p" style="width:0%"></div></div><span class="pstat-val" id="val-p">0/5</span></div>
+      <div class="pstat"><span class="pstat-lbl">🗓️ Tasks</span><div class="pstat-track"><div class="pstat-fill p" id="bar-t" style="width:0%"></div></div><span class="pstat-val" id="val-t">0/—</span></div>
+      <div class="pstat"><span class="pstat-lbl">✅ Habits</span><div class="pstat-track"><div class="pstat-fill gr" id="bar-h" style="width:0%"></div></div><span class="pstat-val" id="val-h">0/6</span></div>
+    </div>
+  </div>
+  <div class="sec-hdr"><span class="sec-title">🕌 Prayer Tracker</span><span class="sec-badge" id="prayer-badge">0 / 5</span></div>
+  <div class="prayer-grid" id="prayer-grid"></div>
+  <div class="sec-hdr"><span class="sec-title">✅ Habit Tracker</span><span class="sec-badge" id="habit-badge">0 / 6</span></div>
+  <div class="habit-grid" id="habit-grid"></div>
+  <div class="sec-hdr"><span class="sec-title">🗓️ Today's Schedule</span><span class="sec-badge" id="task-badge">—</span></div>
+  <div class="timeline" id="timeline"><div style="text-align:center;padding:20px;color:var(--text3);font-size:0.73rem">Select your sleep time above 👆</div></div>
+  <div class="sec-hdr"><span class="sec-title">💬 Quote of the Day</span></div>
+  <div class="quote-card"><div class="qt" id="qt-text">Small steps every day lead to extraordinary results.</div><div class="qa" id="qt-auth">— James Clear</div></div>
+  <div class="sec-hdr"><span class="sec-title">⚡ Core Principles</span></div>
+  <div class="principle-list">
+    <div class="principle"><div class="p-num">1</div><div class="p-text">Never miss Fajr — even if you slept late, set the alarm.</div></div>
+    <div class="principle"><div class="p-num">2</div><div class="p-text">If a day doesn't go as planned, continue from the next block — never abandon the whole day.</div></div>
+    <div class="principle"><div class="p-num">3</div><div class="p-text">Consistency over perfection — 70% done beats 0% perfect every time.</div></div>
+    <div class="principle"><div class="p-num">4</div><div class="p-text">During study blocks, close all social media — focus is your superpower.</div></div>
+    <div class="principle"><div class="p-num">5</div><div class="p-text">Period mode is guilt-free — your body is working hard, rest is strength.</div></div>
+    <div class="principle"><div class="p-num">6</div><div class="p-text">Enjoy days are for recharging — prayers + 10 commits + full presence.</div></div>
+  </div>
+  <div class="sec-hdr"><span class="sec-title">⏱️ Daily Targets</span></div>
+  <div class="sum-grid">
+    <div class="sum-item"><div class="sum-icon">😴</div><div><div class="sum-val">7-8h</div><div class="sum-lbl">Sleep</div></div></div>
+    <div class="sum-item"><div class="sum-icon">📖</div><div><div class="sum-val">2h</div><div class="sum-lbl">Deep Study</div></div></div>
+    <div class="sum-item"><div class="sum-icon">💻</div><div><div class="sum-val">4h</div><div class="sum-lbl">Work</div></div></div>
+    <div class="sum-item"><div class="sum-icon">📝</div><div><div class="sum-val">1h</div><div class="sum-lbl">Light Study</div></div></div>
+    <div class="sum-item"><div class="sum-icon">🕌</div><div><div class="sum-val">5×</div><div class="sum-lbl">Prayers</div></div></div>
+    <div class="sum-item"><div class="sum-icon">🧘</div><div><div class="sum-val">15m</div><div class="sum-lbl">Yoga</div></div></div>
+  </div>
+  <div class="sec-hdr" style="margin-top:18px"><span class="sec-title">📝 Daily Reflection</span></div>
+  <div class="ref-card">
+    <div class="ref-field"><label class="ref-lbl">🏆 One Win Today</label><textarea class="ref-ta" id="ref-win" placeholder="What went well today?"></textarea></div>
+    <div class="ref-field"><label class="ref-lbl">🎯 Improve Tomorrow</label><textarea class="ref-ta" id="ref-improve" placeholder="What will you do better?"></textarea></div>
+    <div class="ref-field"><label class="ref-lbl">🤲 Gratitude</label><textarea class="ref-ta" id="ref-gratitude" placeholder="What are you grateful for?"></textarea></div>
+    <button class="save-btn" id="save-btn" onclick="saveDay()">Save Day ✦</button>
+  </div>
+  <div style="text-align:center;padding:14px 0 6px"><p style="font-family:'Playfair Display',serif;font-style:italic;font-size:0.7rem;color:var(--text3);line-height:1.7">"You don't rise to the level of your goals.<br>You fall to the level of your systems."<br>— James Clear</p></div>
+</div>
+<div class="view" id="view-history">
+  <div class="hero"><div class="hero-glow"></div><div class="hero-date">Your Journey</div><h1 class="hero-title">Day <em>History</em></h1><p class="hero-sub">Every logged day is a step forward.</p></div>
+  <div class="hist-list" id="hist-list"></div>
+</div>
+<div class="view" id="view-stats">
+  <div class="hero"><div class="hero-glow"></div><div class="hero-date">Analytics</div><h1 class="hero-title">Your <em>Stats</em></h1><p class="hero-sub">Progress, not perfection.</p></div>
+  <div class="streak-card"><div class="streak-n" id="stat-streak">0</div><div class="streak-l">🔥 Day Streak</div></div>
+  <div class="stats-g">
+    <div class="sc"><div class="sc-v" id="s-days">0</div><div class="sc-l">Days Logged</div></div>
+    <div class="sc"><div class="sc-v" id="s-avg">0%</div><div class="sc-l">Avg Score</div></div>
+    <div class="sc"><div class="sc-v" id="s-prayers">0</div><div class="sc-l">Total Prayers</div></div>
+    <div class="sc"><div class="sc-v" id="s-habits">0</div><div class="sc-l">Total Habits</div></div>
+    <div class="sc"><div class="sc-v" id="s-best">0%</div><div class="sc-l">Best Day</div></div>
+    <div class="sc"><div class="sc-v" id="s-tasks">0</div><div class="sc-l">Tasks Done</div></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-lbl">Last 7 Days</div>
+    <div class="chart-bars" id="chart-bars"></div>
+    <div style="display:flex;gap:4px;margin-top:4px" id="chart-days"></div>
+  </div>
+</div>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+// ═══════════════════════════════════════════════════════
+// TIME ENGINE
+// All times stored as absolute minutes from midnight (0-1439)
+// Next-day times stored as 1440+ (e.g. 1:00 AM next day = 1500)
+// Day cycle starts at 9 PM (sleep time) of the previous night
+// ═══════════════════════════════════════════════════════
+const a$ = (h,m) => h*60+m;
+const hm$ = (a) => { const n=((a%1440)+1440)%1440; return {h:Math.floor(n/60),m:n%60}; };
+const fmt$ = (h,m) => { const hh=((h%24)+24)%24,ap=hh>=12?'PM':'AM',h12=hh%12||12; return `${h12}:${String(m).padStart(2,'0')} ${ap}`; };
+const fmtA$ = (a) => { const {h,m}=hm$(a); return fmt$(h,m); };
+const dur$ = (m) => { if(m<=0) return ''; const h=Math.floor(m/60),mm=m%60; return h>0&&mm>0?`${h}h ${mm}m`:h>0?`${h}h`:`${mm}m`; };
+
+// Prayer times config
+const LAT=23.7461, LNG=90.3742, METHOD=1;
+
+// ═══════════════════════════════════════════════════════
+// SLEEP OPTIONS
+// Wake times calculated as: Fajr + 45min + remaining_sleep_to_reach_7.5h
+// User wants 7-8h sleep EXCLUDING Fajr 45min
+// ═══════════════════════════════════════════════════════
+const TARGET_SLEEP_MINS = 450; // 7.5 hours
+const FAJR_BLOCK_MINS   = 45;  // wudu 15min + prayer+quran 30min
+
+function calcWakeTime(sleepH, sleepM, fajrH, fajrM) {
+  const sleepA  = a$(sleepH, sleepM);
+  const fajrA   = a$(fajrH, fajrM);
+  // Night sleep = from sleepA to fajrA (crossing midnight)
+  const nightSleep = (fajrA + 1440 - sleepA) % 1440;
+  // After Fajr block, how much more sleep needed?
+  const afterFajrSleep = Math.max(0, TARGET_SLEEP_MINS - nightSleep);
+  // Wake time = Fajr + 45min + afterFajrSleep (all on next day so +1440)
+  return fajrA + 1440 + FAJR_BLOCK_MINS + afterFajrSleep;
+}
+
+// Static sleep options (wake times calculated dynamically based on prayer times)
+const SLEEP_DEFS = [
+  {id:'9pm',  label:'9 PM',  sleepH:21, sleepM:0},
+  {id:'10pm', label:'10 PM', sleepH:22, sleepM:0},
+  {id:'11pm', label:'11 PM', sleepH:23, sleepM:0},
+  {id:'12am', label:'12 AM', sleepH:0,  sleepM:0},
+  {id:'1am',  label:'1 AM',  sleepH:1,  sleepM:0},
+  {id:'2am',  label:'2 AM',  sleepH:2,  sleepM:0},
+  {id:'3am',  label:'3 AM',  sleepH:3,  sleepM:0},
+  {id:'period',    label:'🌸 Period',    sleepH:null, sleepM:null, type:'period'},
+  {id:'entertain', label:'🎉 Enjoy Day', sleepH:null, sleepM:null, type:'entertain'},
+];
+
+// ═══════════════════════════════════════════════════════
+// STATIC DATA
+// ═══════════════════════════════════════════════════════
+const PRAYER_INFO = [{name:'Fajr',emoji:'🌅'},{name:'Dhuhr',emoji:'☀️'},{name:'Asr',emoji:'🌤️'},{name:'Maghrib',emoji:'🌇'},{name:'Isha',emoji:'🌙'}];
+const HABITS = [
+  {name:'🧘 Yoga / Stretching',goal:'15 min'},
+  {name:'💧 Drink Water',      goal:'2L+'},
+  {name:'📚 Deep Study Done',  goal:'2 hrs'},
+  {name:'💻 Work / Projects',  goal:'4 hrs'},
+  {name:'📖 Book Reading',     goal:'1 hr'},
+  {name:'💼 Job Application',  goal:'1+ applied'},
+];
+const QUOTES = [
+  {t:'Discipline is choosing between what you want now and what you want most.',a:'— Anonymous'},
+  {t:'Small steps every day lead to extraordinary results over time.',a:'— James Clear'},
+  {t:'Consistency beats motivation every single day.',a:'— Anonymous'},
+  {t:'Work hard in silence. Let success make the noise.',a:'— Frank Ocean'},
+  {t:'The morning is the rudder of the day.',a:'— Henry Ward Beecher'},
+  {t:"You don't rise to the level of your goals. You fall to the level of your systems.",a:'— James Clear'},
+  {t:'An investment in knowledge pays the best interest.',a:'— Benjamin Franklin'},
+  {t:"If a day doesn't go as planned, continue from the next block. Never quit.",a:"— Sumu's Rule"},
+  {t:'Pray, code, repeat. That is the formula.',a:"— Sumu's Rule"},
+  {t:'Progress, not perfection — every small step counts.',a:"— Sumu's Rule"},
+  {t:'Your future self is watching you right now through your memories.',a:'— Anonymous'},
+  {t:'Rise up, start fresh — see the bright opportunity in each new day.',a:'— Anonymous'},
+];
+const COACH = {
+  fajr:    ["Bismillah — after Fajr, the day is yours. 🌅","Fajr done! The world is asleep, you are already ahead. ✨","Protect this quiet morning — it is your competitive edge. 📖"],
+  morning: ["Deep work block — phone away, full focus. 🎯","You are building skills while most people sleep. 💻","One focused hour beats five distracted ones. 🧠"],
+  mid:     ["Dhuhr done, lunch done — project time! 💻","Afternoon brain is sharp — use it! 🔥","Every line of code is one step closer to your goal. 🎯"],
+  asr:     ["Asr done — job prep time! 💼","One application today can change everything. 🔍","Evening revision — sharpen the skills that get you hired. 🧠"],
+  maghrib: ["After Maghrib is rest time — give your brain a break. 😌","Family time — be present, put the phone down. 👨‍👩‍👧","The day is ending — stay grateful. 🤲"],
+  night:   ["Isha done — you have earned your rest. 🌙","Get ready for tomorrow — sleep early. 💤","Alhamdulillah — you showed up today. 🤲"],
+  period:  ["Your body is working hard — you are still showing up. 🌸","Self-care is productivity — be guilt free. 💕","Keep your routine strong today. 🌸"],
+  entertain:["Enjoy fully — recharging is part of the journey! 🎉","Be present, make memories. 😊","Prayers on time everywhere — enjoy the rest! 🕌"],
+};
+
+// ═══════════════════════════════════════════════════════
+// ROUTINE BUILDER
+// Rules:
+// 1. Day starts at sleep time (stored as abs minutes, possibly 21:00, 22:00 etc)
+// 2. Sleep block is FIRST item
+// 3. Fajr alarm shown inside sleep (not interrupting cursor)
+// 4. Wake time = Fajr + 45min + remaining sleep to reach 7.5h total
+// 5. All prayer times stored as next-day (prayer_abs + 1440) to match wake cursor
+// 6. addBlock() intercepts prayers that fall inside work blocks:
+//    - Short block or prayer near start: finish block, then pray
+//    - Long block (>45min): split block, pray in middle, continue
+// 7. After every block, fill gaps with free time automatically
+// ═══════════════════════════════════════════════════════
+function buildRoutine(sleepDef, P, isPeriod) {
+  // Prayer absolute minutes (same day)
+  const FA = a$(P.fajr.h,    P.fajr.m);
+  const DA = a$(P.dhuhr.h,   P.dhuhr.m);
+  const AA = a$(P.asr.h,     P.asr.m);
+  const MA = a$(P.maghrib.h, P.maghrib.m);
+  const IA = a$(P.isha.h,    P.isha.m);
+
+  // Next-day versions (for after wake time which is 1440+)
+  const DA1 = DA + 1440;
+  const AA1 = AA + 1440;
+  const MA1 = MA + 1440;
+  const IA1 = IA + 1440;
+
+  const sleepA = a$(sleepDef.sleepH, sleepDef.sleepM);
+  // For hours 0-8, add 1440 since it's technically next day from 9PM cycle
+  const sleepAbs = sleepDef.sleepH < 9 ? sleepA + 1440 : sleepA;
+  const wakeAbs  = calcWakeTime(sleepDef.sleepH, sleepDef.sleepM, P.fajr.h, P.fajr.m);
+  const fajrAbs  = FA + 1440; // Fajr is always next day relative to 9PM sleep
+
+  const items = [];
+  const usedPrayers = new Set();
+  let cursor = sleepAbs;
+
+  const mk = (task, startA, dur, cat, pri, note, flags={}) => {
+    const {h,m} = hm$(startA);
+    return { task, startA, endA: startA+dur, dur, timeH:h, timeM:m,
+             cat, priority:pri, note:note||'', userNote:'',
+             isNamaj:!!flags.prayer, isSleep:!!flags.sleep, isFajrAlarm:!!flags.alarm };
+  };
+
+  // Insert prayer at exact absolute time
+  const insertPrayer = (name, absTime, dur) => {
+    if(isPeriod || usedPrayers.has(absTime)) return;
+    if(cursor < absTime) cursor = absTime;
+    items.push(mk(name, cursor, dur, 'ibadah', 'high', `${dur} min`, {prayer:true}));
+    usedPrayers.add(absTime);
+    cursor += dur;
+  };
+
+  // Add a work block, splitting around prayers that fall inside
+  const addBlock = (task, dur, cat, pri, note) => {
+    // All prayers to check (next-day versions)
+    const prayers = [
+      {a:fajrAbs, n:'🕌 Fajr Prayer + Quran', d:30},
+      {a:DA1,     n:'🕌 Dhuhr Prayer',         d:15},
+      {a:AA1,     n:'🕌 Asr Prayer',            d:15},
+      {a:MA1,     n:'🕌 Maghrib Prayer',        d:15},
+      {a:IA1,     n:'🕌 Isha Prayer',           d:15},
+    ];
+
+    let remaining = dur;
+    let start = cursor;
+
+    while(remaining > 0) {
+      const blockEnd = start + remaining;
+      // Find earliest unused prayer inside this block
+      let next = null;
+      if(!isPeriod) {
+        for(const p of prayers) {
+          if(!usedPrayers.has(p.a) && p.a > start && p.a < blockEnd) {
+            if(!next || p.a < next.a) next = p;
+          }
+        }
+      }
+      if(next) {
+        const partDur = next.a - start;
+        if(dur > 45 && partDur >= 15) {
+          // Long block: do partial, pray, continue
+          if(partDur > 0) {
+            items.push(mk(task, start, partDur, cat, pri, note));
+          }
+          cursor = start + partDur;
+          insertPrayer(next.n, next.a, next.d);
+          start = cursor;
+          remaining -= partDur;
+        } else {
+          // Short block: finish first, then pray
+          items.push(mk(task, start, remaining, cat, pri, note));
+          cursor = start + remaining;
+          remaining = 0;
+          if(!usedPrayers.has(next.a)) {
+            if(cursor < next.a) cursor = next.a;
+            insertPrayer(next.n, next.a, next.d);
+          }
+        }
+      } else {
+        items.push(mk(task, start, remaining, cat, pri, note));
+        cursor = start + remaining;
+        remaining = 0;
+      }
+    }
+  };
+
+  // Jump cursor to a fixed time (fills gap with free time automatically)
+  const snapTo = (absTime, freeLabel) => {
+    if(cursor < absTime) {
+      items.push(mk(`😌 ${freeLabel||'Free Time'}`, cursor, absTime-cursor, 'free', 'low', 'Rest and recharge'));
+      cursor = absTime;
+    }
+  };
+
+  // Insert a prayer anchor (snap to time, then pray)
+  const prayAt = (absTime, name, dur) => {
+    snapTo(absTime, 'Free Time');
+    insertPrayer(name, absTime, dur);
+  };
+
+  // ── BUILD DAY ──────────────────────────────────────────
+  // 1. SLEEP (first item, from sleepAbs to wakeAbs)
+  const sleepMins = wakeAbs - sleepAbs;
+  const nightSleep = (fajrAbs - sleepAbs + 1440) % 1440;
+  const afterFajrSleep = Math.max(0, TARGET_SLEEP_MINS - nightSleep);
+  const totalSleepH = Math.round((nightSleep + afterFajrSleep)/60*10)/10;
+  items.push(mk('💤 Sleep', sleepAbs, sleepMins, 'free', 'high',
+    `${totalSleepH}h total (${Math.round(nightSleep/60*10)/10}h night + ${Math.round(afterFajrSleep/60*10)/10}h after Fajr)`,
+    {sleep:true}));
+
+  // 2. FAJR ALARM (shown inside sleep, not affecting cursor)
+  if(!isPeriod) {
+    items.push(mk('🕌 Fajr — Wake, Pray, Back to Sleep', fajrAbs, FAJR_BLOCK_MINS, 'ibadah', 'high',
+      'Wake for Fajr, pray + Quran, then sleep until wake time', {alarm:true, prayer:true}));
+    usedPrayers.add(fajrAbs);
+  }
+
+  // 3. WAKE UP (cursor moves to wakeAbs)
+  cursor = wakeAbs;
+  items.push(mk('🌅 Wake Up + Freshen Up', cursor, 15, 'self', 'high', 'Fresh start'));
+  cursor += 15;
+  items.push(mk('🧘 Yoga + Breakfast + Plan', cursor, 45, 'self', 'medium', '45 min — stretch, eat, set 3 priorities'));
+  cursor += 45;
+
+  // 4. MORNING BLOCKS (based on routine)
+  const key = sleepDef.id;
+
+  if(key === '9pm' || key === '10pm') {
+    // Routines A & B: early wake, Fajr already done, full morning study
+    addBlock('📖 Deep Study Session', 120, 'study', 'high', '2 hrs — Programming / DSA / full focus');
+    if(key === '9pm') {
+      addBlock('💻 Work / Projects (Block 1)', 45, 'career', 'high', '45 min');
+      addBlock('😌 Free Time', 30, 'free', 'low', '30 min — rest, scroll, recharge');
+      addBlock('💻 Work / Projects (Block 2)', 135, 'career', 'high', '2 hrs 15 min — job prep + coding');
+    } else {
+      addBlock('😌 Free Time', 30, 'free', 'low', '30 min');
+      addBlock('💻 Work / Projects', 135, 'career', 'high', '2 hrs 15 min — coding + job prep');
+    }
+  } else if(key === '11pm' || key === '12am') {
+    addBlock('📖 Deep Study Session', 120, 'study', 'high', '2 hrs — Programming / DSA');
+    if(key === '12am') {
+      addBlock('😌 Free Time', 30, 'free', 'low', '30 min');
+      addBlock('💻 Work / Projects (Block 1)', 30, 'career', 'high', '30 min morning block');
+    } else {
+      addBlock('😌 Free Time', 30, 'free', 'low', '30 min');
+      addBlock('💻 Work / Projects (Block 1)', 90, 'career', 'high', '1 hr 30 min');
+    }
+  } else if(key === '1am') {
+    addBlock('📖 Deep Study Session', 120, 'study', 'high', '2 hrs — full focus');
+  } else if(key === '2am') {
+    addBlock('📖 Deep Study (Part 1)', 60, 'study', 'high', '1 hr — before household');
+  }
+  // 3am: no morning study — all shifted to afternoon
+
+  // 5. HOUSEHOLD — snaps to 11 AM + 1440
+  snapTo(a$(11,0)+1440, 'Free Time');
+  addBlock('🏠 Household Work', 120, 'home', 'medium', '2 hrs');
+
+  // 6. DHUHR — snap and pray
+  prayAt(DA1, '🕌 Dhuhr Prayer', 15);
+  items.push(mk('🚿 Shower + Fresh Up', cursor, 45, 'self', 'medium', '45 min'));
+  cursor += 45;
+  items.push(mk('🍽️ Lunch', cursor, 45, 'meals', 'medium', '45 min — eat well'));
+  cursor += 45;
+
+  // 7. AFTERNOON WORK/STUDY
+  if(key === '9pm') {
+    addBlock('💻 Work / Projects (Block 3)', 45, 'career', 'high', '45 min after lunch');
+  } else if(key === '10pm') {
+    addBlock('💻 Work / Projects (cont.)', 90, 'career', 'high', '1 hr 30 min');
+  } else if(key === '11pm') {
+    addBlock('💻 Work / Projects', 90, 'career', 'high', '1 hr 30 min');
+  } else if(key === '12am') {
+    addBlock('💻 Work / Projects', 120, 'career', 'high', '2 hrs');
+  } else if(key === '1am') {
+    addBlock('💻 Work / Projects', 120, 'career', 'high', '2 hrs');
+  } else if(key === '2am') {
+    addBlock('📖 Deep Study (Part 2)', 60, 'study', 'high', '1 hr — 2nd block after lunch');
+    addBlock('💻 Work / Projects', 120, 'career', 'high', '2 hrs');
+  } else if(key === '3am') {
+    addBlock('📖 Deep Study Session', 120, 'study', 'high', '2 hrs — full afternoon focus');
+    addBlock('💻 Work / Projects (Block 1)', 60, 'career', 'high', '1 hr');
+  }
+
+  // 8. ASR — pray at exact time (addBlock already handles if inside a block)
+  if(!usedPrayers.has(AA1)) prayAt(AA1, '🕌 Asr Prayer', 15);
+
+  // 9. AFTER ASR
+  if(key === '3am') addBlock('💻 Work / Projects (Block 2)', 60, 'career', 'high', '1 hr — after Asr');
+  addBlock('📝 Light Study', 60, 'study', 'medium', '1 hr — book / English / revision');
+
+  // 10. SNACKS + FAMILY at 5:30 PM (fill gap with free time)
+  snapTo(a$(17,30)+1440, 'Free Time');
+  items.push(mk('🍳 Snacks + Family Time', cursor, 60, 'family', 'medium', '1 hr — be present with family'));
+  cursor += 60;
+
+  // 11. FREE TIME until Maghrib
+  if(!usedPrayers.has(MA1)) snapTo(MA1, 'Free Time');
+  prayAt(MA1, '🕌 Maghrib Prayer', 15);
+
+  // 12. DINNER
+  items.push(mk('🍽️ Dinner', cursor, 30, 'meals', 'medium', '30 min'));
+  cursor += 30;
+
+  // 13. FREE TIME then ISHA
+  if(!usedPrayers.has(IA1)) snapTo(IA1, 'Wind Down');
+  prayAt(IA1, '🕌 Isha Prayer', 15);
+
+  // 14. WORK AFTER ISHA
+  const postIshaWork = (key === '11pm' || key === '9pm' || key === '10pm') ? 60 : 120;
+  addBlock('💻 Work (After Isha)', postIshaWork, 'career', 'medium',
+    postIshaWork === 60 ? '1 hr — wind down after' : '2 hrs — extra block');
+
+  // Sort by startA, fix display times
+  return items
+    .sort((a,b) => a.startA - b.startA)
+    .map(item => { const {h,m}=hm$(item.startA); return {...item, timeH:h, timeM:m}; });
+}
+
+// Enjoy Day routine
+function buildEnjoyRoutine(P) {
+  const FA=a$(P.fajr.h,P.fajr.m),DA=a$(P.dhuhr.h,P.dhuhr.m);
+  const AA=a$(P.asr.h,P.asr.m),MA=a$(P.maghrib.h,P.maghrib.m),IA=a$(P.isha.h,P.isha.m);
+  const mk=(t,sa,d,c,p,n,ip)=>{const{h,m}=hm$(sa);return{task:t,startA:sa,endA:sa+d,dur:d,timeH:h,timeM:m,cat:c,priority:p,note:n||'',userNote:'',isNamaj:!!ip,isSleep:false,isFajrAlarm:false};};
+  const gitStart=Math.max(DA-120,FA+90);
+  return [
+    mk('🕌 Fajr Prayer',          FA,          30,       'ibadah','high',  'On time — wherever you are',true),
+    mk('☕ Breakfast',             FA+30,       30,       'meals', 'medium','Relax and eat well'),
+    mk('📖 Study (30 min min.)',   FA+60,       30,       'study', 'medium','Commute / waiting time'),
+    mk('💻 GitHub — 10+ Commits',  gitStart,    DA-gitStart,'career','high','Minimum 10 push/commit today'),
+    mk('🕌 Dhuhr Prayer',         DA,          15,       'ibadah','high',  'On time',true),
+    mk('😊 Enjoy Fully',          DA+15,       Math.max(1,AA-DA-15),'free','low','Zero guilt — recharging is productive!'),
+    mk('🕌 Asr Prayer',           AA,          15,       'ibadah','high',  'On time',true),
+    mk('😊 Enjoy / Family Time',  AA+15,       Math.max(1,MA-AA-15),'free','low','Be present, make memories'),
+    mk('🕌 Maghrib Prayer',       MA,          15,       'ibadah','high',  'On time',true),
+    mk('🍽️ Dinner',              MA+15,       30,       'meals', 'medium','30 min'),
+    mk('🕌 Isha Prayer',          Math.max(IA,MA+45),15,'ibadah','high',  'On time',true),
+    mk('📝 Reflection (1 line)',   Math.max(IA+15,MA+60),15,'study','low','Write 1 line summary of the day'),
+    mk('💤 Sleep',                a$(22,0),    0,        'free',  'high',  'Sleep as early as possible',false),
+  ].sort((a,b)=>a.startA-b.startA);
+}
+
+// ═══════════════════════════════════════════════════════
+// ACTIVE TASK — uses day-cycle time (since 9 PM yesterday)
+// ═══════════════════════════════════════════════════════
+function getActiveIdx(schedule) {
+  const now = new Date();
+  const nowA = a$(now.getHours(), now.getMinutes());
+  // Day cycle starts at 9 PM (1260). If before 9 PM, we're still in last night's cycle.
+  const cycleNow = nowA < 1260 ? nowA + 1440 : nowA;
+
+  // Skip sleep and fajr alarm items for active detection
+  let activeIdx = 0;
+  for(let i=0; i<schedule.length; i++) {
+    const s = schedule[i];
+    if(s.isSleep || s.isFajrAlarm) continue;
+    const sa = s.startA < 1260 ? s.startA + 1440 : s.startA;
+    if(cycleNow >= sa) activeIdx = i;
+  }
+  return activeIdx;
+}
+
+// ═══════════════════════════════════════════════════════
+// PRAYER TIMES API
+// ═══════════════════════════════════════════════════════
+async function fetchPrayerTimes(dateKey) {
+  const cached = localStorage.getItem(`pt_${dateKey}`);
+  if(cached) return JSON.parse(cached);
+  try {
+    const [y,m,d] = dateKey.split('-');
+    const r = await fetch(`https://api.aladhan.com/v1/timings/${d}-${m}-${y}?latitude=${LAT}&longitude=${LNG}&method=${METHOD}`);
+    const j = await r.json();
+    if(j.code !== 200) throw new Error();
+    const t = j.data.timings;
+    const p = s => { const [h,m]=s.split(':').map(Number); return {h,m}; };
+    const times = {fajr:p(t.Fajr),dhuhr:p(t.Dhuhr),asr:p(t.Asr),maghrib:p(t.Maghrib),isha:p(t.Isha)};
+    localStorage.setItem(`pt_${dateKey}`, JSON.stringify(times));
+    return times;
+  } catch {
+    return {fajr:{h:4,m:0},dhuhr:{h:12,m:5},asr:{h:15,m:25},maghrib:{h:18,m:48},isha:{h:20,m:10}};
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// STATE & STORAGE
+// ═══════════════════════════════════════════════════════
+let SB_URL = localStorage.getItem('sb_url')||'';
+let SB_KEY = localStorage.getItem('sb_key')||'';
+const TABLE = 'planner_days';
+let syncEnabled = !!(SB_URL&&SB_KEY);
+const todayKey = getDateKey(new Date());
+let viewingKey = todayKey;
+let modalIdx = -1, modalSchedLen = 0;
+
+function getDateKey(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function fmtKey(k) { const[y,m,d]=k.split('-');const M=['January','February','March','April','May','June','July','August','September','October','November','December'];return`${M[+m-1]} ${+d}, ${y}`; }
+function fmtKeyS(k) { const[,m,d]=k.split('-');const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return`${M[+m-1]} ${+d}`; }
+
+function emptyDay() { return {prayers:Array(5).fill(false),habits:Array(6).fill(false),tasks:[],taskNotes:[],reflection:{win:'',improve:'',gratitude:''},sleepId:null,mode:'normal'}; }
+function localLoad(k) { try{const r=localStorage.getItem(`sumu_${k}`);if(r)return{...emptyDay(),...JSON.parse(r)};}catch(e){} return emptyDay(); }
+function localSave(k,d) { try{localStorage.setItem(`sumu_${k}`,JSON.stringify(d));}catch(e){} }
+function localAllKeys() { const k=[];for(let i=0;i<localStorage.length;i++){const ki=localStorage.key(i);if(ki&&ki.startsWith('sumu_2'))k.push(ki.slice(5));}return k.sort((a,b)=>b.localeCompare(a)); }
+
+// ═══════════════════════════════════════════════════════
+// SUPABASE
+// ═══════════════════════════════════════════════════════
+function setSyncDot(s) { document.getElementById('sync-dot').className='sync-dot '+s; }
+async function sbReq(method,path,body) {
+  if(!SB_URL||!SB_KEY) return null;
+  try {
+    const r=await fetch(`${SB_URL}/rest/v1/${path}`,{method,headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':method==='POST'?'resolution=merge-duplicates,return=minimal':'return=minimal'},body:body?JSON.stringify(body):undefined});
+    const t=await r.text();return t?JSON.parse(t):[];
+  } catch(e){return null;}
+}
+async function sbSave(k,data) {
+  setSyncDot('syncing');
+  const r=await sbReq('POST',TABLE,{day_key:k,prayers:data.prayers,habits:data.habits,tasks:data.tasks,task_notes:data.taskNotes||[],reflection:data.reflection,sleep_id:data.sleepId,mode:data.mode,updated_at:new Date().toISOString()});
+  setSyncDot(r!==null?'synced':'error');
+}
+async function sbLoad(k) {
+  const r=await sbReq('GET',`${TABLE}?day_key=eq.${k}&select=*`);
+  if(r&&r.length>0)return{...emptyDay(),prayers:r[0].prayers||[],habits:r[0].habits||[],tasks:r[0].tasks||[],taskNotes:r[0].task_notes||[],reflection:r[0].reflection||{},sleepId:r[0].sleep_id||null,mode:r[0].mode||'normal'};
+  return null;
+}
+async function sbLoadAll(){return await sbReq('GET',`${TABLE}?select=*&order=day_key.desc`)||[];}
+async function loadDay(k){if(syncEnabled){setSyncDot('syncing');const r=await sbLoad(k);setSyncDot('synced');if(r){localSave(k,r);return r;}}return localLoad(k);}
+async function saveData(k,data){localSave(k,data);if(syncEnabled)await sbSave(k,data);}
+function saveSupabaseConfig(){
+  const url=document.getElementById('sb-url').value.trim();
+  const key=document.getElementById('sb-key').value.trim();
+  if(!url||!key){showToast('⚠️ Enter both URL and key');return;}
+  SB_URL=url;SB_KEY=key;
+  localStorage.setItem('sb_url',url);localStorage.setItem('sb_key',key);
+  syncEnabled=true;
+  document.getElementById('setup-card').classList.remove('visible');
+  showToast('✅ Supabase connected!');
+  sbReq('GET',`${TABLE}?select=day_key&limit=1`).then(r=>setSyncDot(r!==null?'synced':'error'));
+}
+
+// ═══════════════════════════════════════════════════════
+// NOTE MODAL
+// ═══════════════════════════════════════════════════════
+function openModal(idx, taskName, currentNote, schedLen) {
+  modalIdx=idx; modalSchedLen=schedLen;
+  document.getElementById('modal-task-name').textContent=taskName;
+  document.getElementById('modal-ta').value=currentNote||'';
+  document.getElementById('note-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('modal-ta').focus(),300);
+}
+function closeModal(e) {
+  if(e&&e.target!==document.getElementById('note-modal'))return;
+  document.getElementById('note-modal').classList.remove('open');
+}
+async function saveNote() {
+  if(modalIdx<0)return;
+  const note=document.getElementById('modal-ta').value.trim();
+  const data=localLoad(viewingKey);
+  while(data.taskNotes.length<=modalIdx)data.taskNotes.push('');
+  data.taskNotes[modalIdx]=note;
+  await saveData(viewingKey,data);
+  document.getElementById('note-modal').classList.remove('open');
+  const pt=await fetchPrayerTimes(viewingKey);
+  renderTimeline(data,pt,viewingKey<todayKey);
+  showToast('📝 Note saved!');
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════
+function renderSleepSelector(data, readonly, P) {
+  const grid=document.getElementById('sleep-grid');
+  const info=document.getElementById('sleep-info');
+  grid.innerHTML='';
+  SLEEP_DEFS.forEach(def=>{
+    const isActive=data.sleepId===def.id;
+    const btn=document.createElement('button');
+    btn.className=`sleep-btn${def.type==='period'?' sp-period':''}${def.type==='entertain'?' sp-enjoy':''}${isActive?' active':''}`;
+    let sub='';
+    if(def.sleepH!=null&&P) {
+      const wA=calcWakeTime(def.sleepH,def.sleepM,P.fajr.h,P.fajr.m);
+      sub=`Wake ${fmtA$(wA)}`;
+    } else {
+      sub=def.type==='period'?'Full routine':'5 prayers+10 commits';
+    }
+    btn.innerHTML=`<div style="font-weight:500">${def.label}</div><div style="font-size:0.56rem;opacity:0.65;margin-top:1px">${sub}</div>`;
+    if(!readonly)btn.onclick=()=>selectSleep(def.id,data);
+    grid.appendChild(btn);
+  });
+  const sel=SLEEP_DEFS.find(o=>o.id===data.sleepId);
+  if(sel&&P&&sel.sleepH!=null) {
+    const wA=calcWakeTime(sel.sleepH,sel.sleepM,P.fajr.h,P.fajr.m);
+    info.textContent=`Slept ${sel.label} → Wake ${fmtA$(wA)} → ~7.5h sleep (excl. Fajr)`;
+  } else if(sel) {
+    info.textContent=sel.type==='period'?'🌸 Period mode — full routine, no prayers':'🎉 Enjoy day — 5 prayers + 10 GitHub commits + 30min study';
+  } else {
+    info.textContent='Select sleep time — full day schedule auto-generates';
+  }
+}
+
+async function selectSleep(sleepId, data) {
+  data.sleepId=sleepId;
+  const def=SLEEP_DEFS.find(o=>o.id===sleepId);
+  data.mode=def?.type||'normal';
+  data.tasks=[];data.taskNotes=[];
+  await saveData(viewingKey,data);
+  render();
+  showToast(`✅ ${def?.label||'Routine'} selected!`);
+}
+
+function renderPrayerTimesCard(pTimes) {
+  const row=document.getElementById('pt-row');
+  const now=new Date();
+  const nowA=a$(now.getHours(),now.getMinutes());
+  const prayers=[
+    {name:'Fajr',emoji:'🌅',a:a$(pTimes.fajr.h,pTimes.fajr.m)},
+    {name:'Dhuhr',emoji:'☀️',a:a$(pTimes.dhuhr.h,pTimes.dhuhr.m)},
+    {name:'Asr',emoji:'🌤️',a:a$(pTimes.asr.h,pTimes.asr.m)},
+    {name:'Maghrib',emoji:'🌇',a:a$(pTimes.maghrib.h,pTimes.maghrib.m)},
+    {name:'Isha',emoji:'🌙',a:a$(pTimes.isha.h,pTimes.isha.m)},
+  ];
+  let ci=-1;
+  for(let i=prayers.length-1;i>=0;i--){if(nowA>=prayers[i].a){ci=i;break;}}
+  row.innerHTML=prayers.map((p,i)=>{
+    const isCur=viewingKey===todayKey&&i===ci;
+    const isPast=viewingKey===todayKey&&nowA>p.a+15;
+    return `<div class="pt-item${isCur?' active':''}${isPast&&!isCur?' past':''}">
+      <div class="pt-emoji">${p.emoji}</div>
+      <div class="pt-name">${p.name}</div>
+      <div class="pt-time">${fmtA$(p.a)}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('pt-date').textContent=viewingKey===todayKey?'Today':fmtKeyS(viewingKey);
+}
+
+function renderPrayers(data,pTimes,readonly) {
+  const grid=document.getElementById('prayer-grid');
+  grid.innerHTML='';
+  const ptArr=[pTimes.fajr,pTimes.dhuhr,pTimes.asr,pTimes.maghrib,pTimes.isha];
+  PRAYER_INFO.forEach((p,i)=>{
+    const el=document.createElement('div');
+    el.className='pc'+(data.prayers[i]?' checked':'');
+    el.innerHTML=`<span class="pc-emoji">${p.emoji}</span><div class="pc-name">${p.name}</div><div class="pc-time">${fmt$(ptArr[i].h,ptArr[i].m)}</div>`;
+    if(!readonly)el.onclick=()=>togglePrayer(i);
+    grid.appendChild(el);
+  });
+  const done=data.prayers.filter(Boolean).length;
+  const b=document.getElementById('prayer-badge');
+  b.textContent=`${done} / 5`;b.className='sec-badge'+(done===5?' done':'');
+}
+
+function renderHabits(data,readonly) {
+  const grid=document.getElementById('habit-grid');
+  grid.innerHTML='';
+  HABITS.forEach((h,i)=>{
+    const el=document.createElement('div');
+    el.className='hc'+(data.habits[i]?' checked':'');
+    el.innerHTML=`<div class="hc-box">${data.habits[i]?'✓':''}</div><div><div class="hc-name">${h.name}</div><div class="hc-goal">${h.goal}</div></div>`;
+    if(!readonly)el.onclick=()=>toggleHabit(i);
+    grid.appendChild(el);
+  });
+  const done=data.habits.filter(Boolean).length;
+  const b=document.getElementById('habit-badge');
+  b.textContent=`${done} / 6`;b.className='sec-badge'+(done===6?' done':'');
+}
+
+function renderTimeline(data,pTimes,readonly) {
+  const tl=document.getElementById('timeline');
+  const badge=document.getElementById('task-badge');
+  const def=SLEEP_DEFS.find(o=>o.id===data.sleepId);
+
+  if(!def){
+    tl.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:0.73rem">Select your sleep time above 👆</div>';
+    badge.textContent='—';badge.className='sec-badge';return 0;
+  }
+
+  let schedule;let modeBanner='';
+  if(def.type==='period'){
+    const yKey=getDateKey(new Date(Date.now()-86400000));
+    const yData=localLoad(yKey);
+    const bDef=SLEEP_DEFS.find(o=>o.id===yData.sleepId&&!o.type)||SLEEP_DEFS[2];
+    schedule=buildRoutine(bDef,pTimes,true);
+    modeBanner=`<div class="mode-banner period"><div class="mode-title">🌸 Period Mode — Full routine, no prayers</div><div class="mode-sub">Your body is working hard — keep going, rest when needed.</div></div>`;
+  } else if(def.type==='entertain'){
+    schedule=buildEnjoyRoutine(pTimes);
+    modeBanner=`<div class="mode-banner enjoy"><div class="mode-title">🎉 Enjoy Day — 5 Prayers + 10 GitHub Commits + 30min Study</div><div class="mode-sub">Recharging is productive — enjoy fully!</div></div>`;
+  } else {
+    schedule=buildRoutine(def,pTimes,false);
+  }
+
+  while(data.tasks.length<schedule.length)data.tasks.push(false);
+  while(data.taskNotes.length<schedule.length)data.taskNotes.push('');
+
+  const isToday=viewingKey===todayKey;
+  const activeIdx=isToday?getActiveIdx(schedule):-1;
+
+  tl.innerHTML=modeBanner;
+  schedule.forEach((s,i)=>{
+    const done=data.tasks[i];
+    const isActive=isToday&&i===activeIdx&&!done&&!s.isSleep&&!s.isFajrAlarm;
+    const userNote=data.taskNotes[i]||'';
+    const el=document.createElement('div');
+    el.className=`tl-item${done?' done':''}${isActive?' active-now':''}${s.isNamaj?' is-prayer':''}${s.isSleep||s.isFajrAlarm?' is-sleep':''}`;
+
+    el.innerHTML=`
+      <div class="tl-time-col">
+        <div class="tl-time-val">${fmt$(s.timeH,s.timeM)}</div>
+        ${s.dur>0?`<div class="tl-time-dur">${dur$(s.dur)}</div>`:''}
+      </div>
+      <div class="tl-dot-col"><div class="tl-dot"></div></div>
+      <div class="tl-body-col">
+        <div class="tl-card">
+          <div class="tl-top">
+            <span class="tl-task-name">${s.task}</span>
+            <div class="tl-chips">
+              <span class="chip chip-${s.cat}">${s.cat}</span>
+              <span class="tl-pri ${s.priority}"></span>
+              <div class="tl-check">${done?'✓':'○'}</div>
+            </div>
+          </div>
+          ${s.note?`<div class="tl-task-note">${s.note}</div>`:''}
+          ${!s.isFajrAlarm?`<div class="tl-note-area">
+            ${userNote
+              ?`<div class="tl-user-note" onclick="event.stopPropagation();openModal(${i},'${s.task.replace(/'/g,"\\'").replace(/"/g,'\\"')}','${userNote.replace(/'/g,"\\'").replace(/"/g,'\\"')}',${schedule.length})">${userNote}</div>`
+              :(!readonly?`<div class="tl-note-trigger" onclick="event.stopPropagation();openModal(${i},'${s.task.replace(/'/g,"\\'").replace(/"/g,'\\"')}','',${schedule.length})">+ Add note...</div>`:'')
+            }
+          </div>`:''}
+        </div>
+      </div>`;
+
+    if(!readonly){
+      el.querySelector('.tl-card').addEventListener('click',(e)=>{
+        if(e.target.closest('.tl-note-area'))return;
+        toggleTask(i,schedule.length);
+      });
+    }
+    tl.appendChild(el);
+  });
+
+  const done=data.tasks.slice(0,schedule.length).filter(Boolean).length;
+  badge.textContent=`${done} / ${schedule.length}`;
+  badge.className='sec-badge'+(done===schedule.length?' done':'');
+  return schedule.length;
+}
+
+function renderProgress(data,totalTasks) {
+  const pDone=data.prayers.filter(Boolean).length;
+  const hDone=data.habits.filter(Boolean).length;
+  const tLen=Math.max(totalTasks||1,1);
+  const tDone=data.tasks.slice(0,tLen).filter(Boolean).length;
+  const pct=Math.round((pDone+hDone+tDone)/(5+6+tLen)*100);
+  const circ=201.06;
+  document.getElementById('main-ring').style.strokeDashoffset=circ-(pct/100)*circ;
+  document.getElementById('ring-pct').textContent=pct+'%';
+  document.getElementById('overall-badge').textContent=pct+'%';
+  document.getElementById('bar-p').style.width=(pDone/5*100)+'%';
+  document.getElementById('bar-t').style.width=(tDone/tLen*100)+'%';
+  document.getElementById('bar-h').style.width=(hDone/6*100)+'%';
+  document.getElementById('val-p').textContent=`${pDone}/5`;
+  document.getElementById('val-t').textContent=`${tDone}/${tLen}`;
+  document.getElementById('val-h').textContent=`${hDone}/6`;
+}
+
+// ═══════════════════════════════════════════════════════
+// MAIN RENDER
+// ═══════════════════════════════════════════════════════
+async function render() {
+  const isToday=viewingKey===todayKey,isPast=viewingKey<todayKey;
+  const data=await loadDay(viewingKey);
+  const pTimes=await fetchPrayerTimes(viewingKey);
+  const d=new Date(viewingKey+'T00:00:00');
+  const dayNum=Math.floor(d/86400000);
+
+  // Auto-carry yesterday's sleep
+  if(isToday&&!data.sleepId){
+    const yKey=getDateKey(new Date(Date.now()-86400000));
+    const yData=localLoad(yKey);
+    if(yData.sleepId&&!['period','entertain'].includes(yData.sleepId)){
+      data.sleepId=yData.sleepId;data.mode=yData.mode||'normal';localSave(viewingKey,data);
+    }
+  }
+
+  document.getElementById('hero-date').textContent=isToday
+    ?d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})
+    :fmtKey(viewingKey);
+
+  const q=QUOTES[dayNum%QUOTES.length];
+  document.getElementById('qt-text').textContent=q.t;
+  document.getElementById('qt-auth').textContent=q.a;
+  document.getElementById('hero-quote').textContent=q.t;
+
+  const h=new Date().getHours();
+  const FA2=pTimes.fajr.h,DA2=pTimes.dhuhr.h,AA2=pTimes.asr.h,MA2=pTimes.maghrib.h,IA2=pTimes.isha.h;
+  let cp=data.mode==='period'?'period':data.mode==='entertain'?'entertain'
+    :h>=FA2&&h<FA2+2?'fajr':h>=FA2+2&&h<DA2?'morning':h>=DA2&&h<AA2?'mid'
+    :h>=AA2&&h<MA2?'asr':h>=MA2&&h<IA2?'maghrib':'night';
+  document.getElementById('coach-msg').textContent=(COACH[cp]||COACH.morning)[dayNum%3];
+
+  document.getElementById('date-lbl').textContent=isToday?'Today':fmtKeyS(viewingKey);
+  document.getElementById('btn-next').disabled=isToday;
+
+  const banner=document.getElementById('past-banner'),saveBtn=document.getElementById('save-btn');
+  if(isPast){
+    banner.classList.add('visible');
+    document.getElementById('past-lbl').textContent=fmtKey(viewingKey);
+    saveBtn.disabled=true;
+    document.querySelectorAll('.ref-ta').forEach(el=>{el.readOnly=true;});
+  } else {
+    banner.classList.remove('visible');saveBtn.disabled=false;
+    document.querySelectorAll('.ref-ta').forEach(el=>{el.readOnly=false;});
+  }
+
+  renderPrayerTimesCard(pTimes);
+  renderSleepSelector(data,isPast,pTimes);
+  renderPrayers(data,pTimes,isPast);
+  renderHabits(data,isPast);
+  const totalTasks=renderTimeline(data,pTimes,isPast);
+  renderProgress(data,totalTasks);
+
+  document.getElementById('ref-win').value=data.reflection?.win||'';
+  document.getElementById('ref-improve').value=data.reflection?.improve||'';
+  document.getElementById('ref-gratitude').value=data.reflection?.gratitude||'';
+}
+
+// ═══════════════════════════════════════════════════════
+// TOGGLES
+// ═══════════════════════════════════════════════════════
+async function togglePrayer(i){
+  const data=localLoad(viewingKey);data.prayers[i]=!data.prayers[i];
+  await saveData(viewingKey,data);
+  const pt=await fetchPrayerTimes(viewingKey);
+  renderPrayers(data,pt,false);renderProgress(data,data.tasks.length||1);
+  showToast(data.prayers[i]?`🕌 ${PRAYER_INFO[i].name} — Alhamdulillah ✨`:`${PRAYER_INFO[i].name} unchecked`);
+}
+async function toggleHabit(i){
+  const data=localLoad(viewingKey);data.habits[i]=!data.habits[i];
+  await saveData(viewingKey,data);
+  renderHabits(data,false);renderProgress(data,data.tasks.length||1);
+  showToast(data.habits[i]?`${HABITS[i].name} — Done! 💚`:`${HABITS[i].name} unchecked`);
+}
+async function toggleTask(i,totalTasks){
+  const data=localLoad(viewingKey);
+  while(data.tasks.length<=i)data.tasks.push(false);
+  data.tasks[i]=!data.tasks[i];
+  await saveData(viewingKey,data);
+  const pt=await fetchPrayerTimes(viewingKey);
+  renderTimeline(data,pt,false);renderProgress(data,totalTasks);
+}
+async function saveDay(){
+  const data=localLoad(viewingKey);
+  data.reflection={win:document.getElementById('ref-win').value,improve:document.getElementById('ref-improve').value,gratitude:document.getElementById('ref-gratitude').value};
+  await saveData(viewingKey,data);
+  showToast('✦ Day saved — keep going, Sumu!');
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function changeDay(dir){
+  const d=new Date(viewingKey+'T00:00:00');d.setDate(d.getDate()+dir);
+  const nk=getDateKey(d);if(nk>todayKey)return;
+  viewingKey=nk;render();
+}
+function switchView(view,btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(`view-${view}`).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(view==='history')renderHistory();
+  if(view==='stats')renderStats();
+}
+
+// ═══════════════════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════════════════
+async function renderHistory(){
+  const list=document.getElementById('hist-list');
+  list.innerHTML='<div class="empty">Loading...</div>';
+  if(syncEnabled){const remote=await sbLoadAll();remote.forEach(r=>localSave(r.day_key,{...emptyDay(),prayers:r.prayers||[],habits:r.habits||[],tasks:r.tasks||[],taskNotes:r.task_notes||[],reflection:r.reflection||{},sleepId:r.sleep_id||null,mode:r.mode||'normal'}));}
+  const keys=localAllKeys();
+  if(!keys.length){list.innerHTML='<div class="empty">No days logged yet.<br>Start today ✨</div>';return;}
+  list.innerHTML='';
+  keys.forEach(key=>{
+    const data=localLoad(key);
+    const p=data.prayers.filter(Boolean).length,h=data.habits.filter(Boolean).length,t=data.tasks.filter(Boolean).length;
+    const tLen=Math.max(data.tasks.length,1);
+    const pct=Math.round((p+h+t)/(5+6+tLen)*100);
+    const def=SLEEP_DEFS.find(o=>o.id===data.sleepId);
+    const ml=data.mode==='period'?'Period':data.mode==='entertain'?'Enjoy':def?def.label:'';
+    const card=document.createElement('div');
+    card.className='hcard';
+    card.innerHTML=`
+      <div class="hcard-hdr">
+        <div class="hcard-date">${fmtKey(key)}</div>
+        <div class="hcard-right">${ml?`<span class="hcard-mode">${ml}</span>`:''}<div class="hcard-score">${pct}%</div></div>
+      </div>
+      <div class="hbar"><span class="hbar-l">🕌 Prayers</span><div class="hbar-t"><div class="hbar-f" style="width:${p/5*100}%;background:var(--gold)"></div></div><span class="hbar-v">${p}/5</span></div>
+      <div class="hbar"><span class="hbar-l">✅ Habits</span><div class="hbar-t"><div class="hbar-f" style="width:${h/6*100}%;background:var(--green)"></div></div><span class="hbar-v">${h}/6</span></div>
+      <div class="hbar"><span class="hbar-l">🗓️ Tasks</span><div class="hbar-t"><div class="hbar-f" style="width:${t/tLen*100}%;background:var(--purple)"></div></div><span class="hbar-v">${t}/${tLen}</span></div>
+      ${data.reflection?.win?`<div class="hcard-win">🏆 "${data.reflection.win}"</div>`:''}`;
+    card.onclick=()=>{viewingKey=key;switchView('today',document.getElementById('tab-today'));render();};
+    list.appendChild(card);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════
+function renderStats(){
+  const keys=localAllKeys();
+  let tP=0,tH=0,tT=0,tPct=0,bestPct=0;
+  keys.forEach(k=>{const d=localLoad(k);const p=d.prayers.filter(Boolean).length,h=d.habits.filter(Boolean).length,t=d.tasks.filter(Boolean).length;const tLen=Math.max(d.tasks.length,1);const pct=Math.round((p+h+t)/(5+6+tLen)*100);tP+=p;tH+=h;tT+=t;tPct+=pct;if(pct>bestPct)bestPct=pct;});
+  let streak=0;const dd=new Date();
+  while(true){const k=getDateKey(dd);if(!localStorage.getItem(`sumu_${k}`))break;streak++;dd.setDate(dd.getDate()-1);}
+  const n=keys.length||1;
+  document.getElementById('stat-streak').textContent=streak;
+  document.getElementById('s-days').textContent=keys.length;
+  document.getElementById('s-avg').textContent=Math.round(tPct/n)+'%';
+  document.getElementById('s-prayers').textContent=tP;
+  document.getElementById('s-habits').textContent=tH;
+  document.getElementById('s-best').textContent=bestPct+'%';
+  document.getElementById('s-tasks').textContent=tT;
+  renderChart();
+}
+function renderChart(){
+  const bEl=document.getElementById('chart-bars'),lEl=document.getElementById('chart-days');
+  bEl.innerHTML='';lEl.innerHTML='';
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);const k=getDateKey(d);
+    const data=localLoad(k);
+    const p=data.prayers.filter(Boolean).length,h=data.habits.filter(Boolean).length,t=data.tasks.filter(Boolean).length;
+    const tLen=Math.max(data.tasks.length,1);const pct=Math.round((p+h+t)/(5+6+tLen)*100);
+    const dayName=d.toLocaleDateString('en-US',{weekday:'short'}).slice(0,3);const isToday=i===0;
+    const wrap=document.createElement('div');wrap.className='cbw';
+    wrap.innerHTML=`${pct>0?`<div class="cb-p">${pct}%</div>`:`<div class="cb-p" style="opacity:0">0</div>`}<div class="cb${isToday?' today':''}" style="height:${Math.max(pct,2)}%"></div>`;
+    bEl.appendChild(wrap);
+    const lbl=document.createElement('div');lbl.className='cb-d'+(isToday?' today':'');lbl.textContent=dayName;lEl.appendChild(lbl);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// THEME & UTILS
+// ═══════════════════════════════════════════════════════
+function toggleTheme(){
+  const html=document.documentElement,isDark=html.getAttribute('data-theme')==='dark';
+  html.setAttribute('data-theme',isDark?'light':'dark');
+  document.getElementById('theme-btn').textContent=isDark?'☀️':'🌙';
+  localStorage.setItem('theme',isDark?'light':'dark');
+}
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+async function init(){
+  const savedTheme=localStorage.getItem('theme')||'dark';
+  document.documentElement.setAttribute('data-theme',savedTheme);
+  document.getElementById('theme-btn').textContent=savedTheme==='dark'?'🌙':'☀️';
+  document.getElementById('loader-sub').textContent='Loading prayer times...';
+  await fetchPrayerTimes(todayKey);
+  if(syncEnabled){
+    setSyncDot('syncing');
+    document.getElementById('loader-sub').textContent='Syncing data...';
+    const r=await sbReq('GET',`${TABLE}?select=day_key&limit=1`);
+    setSyncDot(r!==null?'synced':'error');
+    if(r===null)syncEnabled=false;
+  } else {
+    document.getElementById('setup-card').classList.add('visible');
+    setSyncDot('error');
+  }
+  document.getElementById('loader-sub').textContent='Almost ready...';
+  await render();
+  document.getElementById('loading').classList.add('hidden');
+  setTimeout(()=>document.getElementById('loading').style.display='none',500);
+}
+init();
+</script>
+</body>
+</html>
